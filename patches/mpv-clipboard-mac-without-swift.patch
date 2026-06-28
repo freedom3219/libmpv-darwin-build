@@ -1,0 +1,35 @@
+diff --git a/player/clipboard/clipboard-mac.m b/player/clipboard/clipboard-mac.m
+index d9ac6967e6..9fb56b236e 100644
+--- a/player/clipboard/clipboard-mac.m
++++ b/player/clipboard/clipboard-mac.m
+@@ -15,7 +15,10 @@
+  */
+ 
+ #include "clipboard.h"
++
++#if HAVE_SWIFT
+ #include "osdep/mac/swift.h"
++#endif
+ 
++#if HAVE_SWIFT
+ struct clipboard_mac_priv {
+     Clipboard *clipboard;
+ };
+@@ -51,3 +54,19 @@ const struct clipboard_backend clipboard_backend_mac = {
+     .get_data = get_data,
+     .set_data = set_data,
+ };
++#else
++static int init(struct clipboard_ctx *cl, struct clipboard_init_params *params)
++{
++    (void)cl;
++    (void)params;
++    return CLIPBOARD_UNAVAILABLE;
++}
++
++const struct clipboard_backend clipboard_backend_mac = {
++    .name = "mac",
++    .desc = "macOS clipboard",
++    .init = init,
++};
++#endif

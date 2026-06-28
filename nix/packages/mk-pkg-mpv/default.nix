@@ -48,6 +48,7 @@ let
 
     cd $src
     patch -p1 <${../../../patches/mpv-fix-missing-objc.patch}
+    patch -p1 <${../../../patches/mpv-clipboard-mac-without-swift.patch}
     if [ "${os}" == "${oses.ios}" ]; then
       patch -p1 <${../../../patches/mpv-audiounit-shared-session.patch}
     fi
