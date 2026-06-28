@@ -54,6 +54,31 @@
     url = "https://github.com/haasn/libplacebo/archive/refs/tags/v6.338.2.tar.gz";
     sha256 = "2f1e624e09d72a8c9db70f910f7560e764a1c126dae42acc5b3bcef836a7aec6";
   };
+  libplaceboFastFloat = {
+    version = "2b2395f";
+    url = "https://github.com/fastfloat/fast_float/archive/2b2395f9ac836ffca6404424bcc252bff7aa80e4.tar.gz";
+    sha256 = "230d20e4e4ac1f6a9df92c4d746c6ec536cdb0c085bc8635d4b88cead5dc22cb";
+  };
+  libplaceboGlad = {
+    version = "d08b1aa";
+    url = "https://github.com/Dav1dde/glad/archive/d08b1aa01f8fe57498f04d47b5fa8c48725be877.tar.gz";
+    sha256 = "7a5fb3299a20e8088a504f3bb2b7247d85c4207706754180a1b4a4840a8728e4";
+  };
+  libplaceboJinja = {
+    version = "b08cd4b";
+    url = "https://github.com/pallets/jinja/archive/b08cd4bc64bb980df86ed2876978ae5735572280.tar.gz";
+    sha256 = "9a20bab550a760ccb9b38a45d4fe76be92649206ee04633c646d0935a1872b0e";
+  };
+  libplaceboMarkupsafe = {
+    version = "c0254f0";
+    url = "https://github.com/pallets/markupsafe/archive/c0254f0cfe51720ecc9e72e8896022af29af5b44.tar.gz";
+    sha256 = "1826c5d89cc1aa0b3088f538726d339e0c5cd69fbe03f7b8f9a3f880474d1120";
+  };
+  libplaceboVulkanHeaders = {
+    version = "d732b2d";
+    url = "https://github.com/KhronosGroup/Vulkan-Headers/archive/d732b2de303ce505169011d438178191136bfb00.tar.gz";
+    sha256 = "570f9ae1e65466dbaf5fcab667abd079dd0a61c4ab86cf535efd492bf70a5b74";
+  };
   libvorbis = {
     version = "1.3.7";
     url = "https://github.com/xiph/vorbis/releases/download/v1.3.7/libvorbis-1.3.7.tar.gz";
