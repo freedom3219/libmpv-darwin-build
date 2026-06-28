@@ -42,7 +42,6 @@ let
     chmod -R 777 $src
 
     cd $src
-    patch -p1 <${../../../patches/ffmpeg-fix-vp9-hwaccel.patch}
     patch -p1 <${../../../patches/ffmpeg-fix-hls-mp4-seek.patch}
     patch -p1 <${../../../patches/ffmpeg-fix-ios-hdr-texture.patch}
     patch -p1 <${../../../patches/ffmpeg-fix-dash-base-url-escape.patch}
