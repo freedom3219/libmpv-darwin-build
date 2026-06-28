@@ -44,6 +44,7 @@ if arch != archs.universal then
     libxml2 = callPackage ../mk-pkg-libxml2/default.nix { };
     uchardet = callPackage ../mk-pkg-uchardet/default.nix { };
     libass = callPackage ../mk-pkg-libass/default.nix { };
+    libplacebo = callPackage ../mk-pkg-libplacebo/default.nix { };
     harfbuzz = callPackage ../mk-pkg-harfbuzz/default.nix { };
     fribidi = callPackage ../mk-pkg-fribidi/default.nix { };
     freetype = callPackage ../mk-pkg-freetype/default.nix { };
@@ -67,6 +68,7 @@ if arch != archs.universal then
         libxml2
         uchardet
         libass
+        libplacebo
         harfbuzz
         fribidi
         freetype

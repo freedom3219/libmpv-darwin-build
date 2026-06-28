@@ -26,6 +26,7 @@ let
   ffmpeg = callPackage ../mk-pkg-ffmpeg/default.nix { };
   uchardet = callPackage ../mk-pkg-uchardet/default.nix { };
   libass = callPackage ../mk-pkg-libass/default.nix { };
+  libplacebo = callPackage ../mk-pkg-libplacebo/default.nix { };
 
   nativeBuildInputs = [
     pkgs.meson
@@ -77,6 +78,7 @@ pkgs.stdenvNoCC.mkDerivation {
     ++ pkgs.lib.optionals (variant == "video") [
       uchardet
       libass
+      libplacebo
     ];
   configurePhase = ''
     DISABLE_ALL_OPTIONS=(
