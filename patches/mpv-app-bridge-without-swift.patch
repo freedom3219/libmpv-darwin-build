@@ -1,0 +1,30 @@
+--- a/osdep/mac/app_bridge.m
++++ b/osdep/mac/app_bridge.m
+@@ -166,3 +166,27 @@
+     return [(Application *)[Application sharedApplication] main:argc :argv];
+ }
+ #endif
++
++#if !HAVE_SWIFT
++void cocoa_init_media_keys(void)
++{
++}
++
++void cocoa_uninit_media_keys(void)
++{
++}
++
++void cocoa_set_input_context(struct input_ctx *input_context)
++{
++    (void)input_context;
++}
++
++void cocoa_set_mpv_handle(struct mpv_handle *ctx)
++{
++    (void)ctx;
++}
++
++void cocoa_init_cocoa_cb(void)
++{
++}
++#endif
