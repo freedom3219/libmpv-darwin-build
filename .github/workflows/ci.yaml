@@ -72,7 +72,7 @@ jobs:
           nix develop -c make \
             XCODE_PATH=${XCODE_PATH} \
             VERSION=${VERSION} \
-            TARGET=mk-out-archive-xcframeworks-macos-universal-video-default
+            TARGET=mk-out-archive-xcframeworks-macos-universal-video-full
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
