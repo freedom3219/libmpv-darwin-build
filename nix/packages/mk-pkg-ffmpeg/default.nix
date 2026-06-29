@@ -41,12 +41,6 @@ let
     export src=$PWD/src
     chmod -R 777 $src
 
-    cd $src
-    patch -p1 <${../../../patches/ffmpeg-fix-hls-mp4-seek.patch}
-    patch -p1 <${../../../patches/ffmpeg-fix-ios-hdr-texture.patch}
-    patch -p1 <${../../../patches/ffmpeg-fix-dash-base-url-escape.patch}
-    cd -
-
     cp ${./meson.build} $src/meson.build
     cp ${./meson.options} $src/meson.options
 
