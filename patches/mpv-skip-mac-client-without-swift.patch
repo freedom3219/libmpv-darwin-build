@@ -1,0 +1,11 @@
+--- a/player/main.c
++++ b/player/main.c
+@@ -407,7 +407,7 @@ int mp_initialize(struct MPContext *mpctx, char **options)
+ 
+     MP_STATS(mpctx, "start init");
+ 
+-#if HAVE_COCOA
++#if HAVE_COCOA && HAVE_SWIFT
+     mpv_handle *ctx = mp_new_client(mpctx->clients, "mac");
+     cocoa_set_mpv_handle(ctx);
+ #endif
