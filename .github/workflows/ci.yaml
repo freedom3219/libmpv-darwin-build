@@ -2,11 +2,6 @@ name: ci
 
 on:
   workflow_dispatch:
-    inputs:
-      validation_run_id:
-        description: Existing successful run to stage for local native validation
-        required: false
-        type: string
   push:
     branches:
       - main
@@ -18,7 +13,6 @@ on:
 
 jobs:
   ci:
-    if: ${{ !inputs.validation_run_id }}
     name: ci
     # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md
     runs-on: macos-15
@@ -98,24 +92,3 @@ jobs:
           files: |
             result/*.tar.gz
             result/*.zip
-
-  stage-validation:
-    if: ${{ inputs.validation_run_id != '' }}
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: write
-    steps:
-      - name: Stage native artifact in a draft release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          VALIDATION_RUN_ID: ${{ inputs.validation_run_id }}
-          SOURCE_COMMIT: ${{ github.sha }}
-        run: |
-          gh run download "$VALIDATION_RUN_ID" --dir artifacts
-          gh release create v0.6.0-nexvideo.2 \
-            --draft --latest=false --target "$SOURCE_COMMIT" \
-            --title "Independent subtitle delay validation" \
-            --notes "Draft native artifact pending decoder timing validation." \
-            artifacts/artifact/*.tar.gz

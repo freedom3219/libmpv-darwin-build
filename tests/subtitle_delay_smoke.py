@@ -2,7 +2,8 @@
 
 Run with DYLD_FRAMEWORK_PATH pointing at the packaged framework directory.
 The first argument is the path to the Mpv framework binary.
-An optional second argument selects ass or embedded fixtures (requires ffmpeg).
+An optional second argument selects ass or embedded fixtures.
+Fixture generation requires ffmpeg with libx264.
 """
 import ctypes as ct
 import json
@@ -73,9 +74,14 @@ def main():
         with tempfile.TemporaryDirectory(prefix='subtitle-delay-') as directory:
             root = Path(directory)
             video = root / 'timeline.y4m'
-            # Six seconds of small, uncompressed video, without an ffmpeg dependency.
+            # Generate H.264 because the production build excludes the Y4M demuxer.
             video.write_bytes(b'YUV4MPEG2 W16 H16 F10:1 Ip A1:1 C420jpeg\n' +
                               (b'FRAME\n' + bytes([16] * 256 + [128] * 128)) * 60)
+            encoded = root / 'timeline.mp4'
+            subprocess.run(['ffmpeg', '-v', 'error', '-i', str(video),
+                            '-c:v', 'libx264', '-preset', 'ultrafast',
+                            '-pix_fmt', 'yuv420p', str(encoded)], check=True)
+            video = encoded
             for label in ['PRIMARY', 'SECONDARY']:
                 (root / f'{label}.srt').write_text(
                     f'1\n00:00:02,000 --> 00:00:04,000\n{label}\n', encoding='utf-8')
