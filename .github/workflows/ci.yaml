@@ -59,6 +59,8 @@ jobs:
         run: |
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             VERSION="${GITHUB_REF#refs/tags/}"
+          else
+            VERSION="v0.6.0-nexvideo.2"
           fi
 
           echo "version=${VERSION}" >> $GITHUB_OUTPUT

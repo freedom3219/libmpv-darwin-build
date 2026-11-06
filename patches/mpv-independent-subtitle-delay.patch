@@ -1,0 +1,136 @@
+# Backport of mpv dea512ea38605b6e203e98c1684f819e4aa465f1 to v0.36.0.
+# Preserve independent decoder timing, external subtitle seeks and sub-step.
+diff --git a/options/options.c b/options/options.c
+index 86e5a7b..b64c81a 100644
+--- a/options/options.c
++++ b/options/options.c
+@@ -256,7 +256,8 @@ const struct m_sub_options mp_sub_filter_opts = {
+ 
+ const struct m_sub_options mp_subtitle_sub_opts = {
+     .opts = (const struct m_option[]){
+-        {"sub-delay", OPT_FLOAT(sub_delay)},
++        {"sub-delay", OPT_FLOAT(sub_delay[0])},
++        {"secondary-sub-delay", OPT_FLOAT(sub_delay[1])},
+         {"sub-fps", OPT_FLOAT(sub_fps)},
+         {"sub-speed", OPT_FLOAT(sub_speed)},
+         {"sub-visibility", OPT_BOOL(sub_visibility)},
+diff --git a/options/options.h b/options/options.h
+index 0224e56..341029a 100644
+--- a/options/options.h
++++ b/options/options.h
+@@ -79,7 +79,7 @@ struct mp_subtitle_opts {
+     bool sub_visibility;
+     bool sec_sub_visibility;
+     int sub_pos;
+-    float sub_delay;
++    float sub_delay[2];
+     float sub_fps;
+     float sub_speed;
+     int forced_subs_only;
+diff --git a/player/command.c b/player/command.c
+index 0eb13a7..3c94b06 100644
+--- a/player/command.c
++++ b/player/command.c
+@@ -2838,9 +2838,10 @@ static int mp_property_sub_delay(void *ctx, struct m_property *prop,
+ {
+     MPContext *mpctx = ctx;
+     struct MPOpts *opts = mpctx->opts;
++    int track_ind = *(int *)prop->priv;
+     switch (action) {
+     case M_PROPERTY_PRINT:
+-        *(char **)arg = format_delay(opts->subs_rend->sub_delay);
++        *(char **)arg = format_delay(opts->subs_rend->sub_delay[track_ind]);
+         return M_PROPERTY_OK;
+     }
+     return mp_property_generic_option(mpctx, prop, action, arg);
+@@ -3894,7 +3895,9 @@ static const struct m_property mp_properties_base[] = {
+     {"sid", property_switch_track, .priv = (void *)(const int[]){0, STREAM_SUB}},
+     {"secondary-sid", property_switch_track,
+      .priv = (void *)(const int[]){1, STREAM_SUB}},
+-    {"sub-delay", mp_property_sub_delay},
++    {"sub-delay", mp_property_sub_delay, .priv = (void *)&(const int){0}},
++    {"secondary-sub-delay", mp_property_sub_delay,
++        .priv = (void *)&(const int){1}},
+     {"sub-speed", mp_property_sub_speed},
+     {"sub-pos", mp_property_sub_pos},
+     {"sub-text", mp_property_sub_text,
+@@ -4213,6 +4216,7 @@ static const struct property_osd_display {
+     {"secondary-sid", "Secondary subtitles"},
+     {"sub-pos", "Sub position"},
+     {"sub-delay", "Sub delay"},
++    {"secondary-sub-delay", "Secondary sub delay"},
+     {"sub-speed", "Sub speed"},
+     {"sub-visibility",
+      .msg = "Subtitles ${!sub-visibility==yes:hidden}"
+@@ -5307,10 +5311,12 @@ static void cmd_sub_step_seek(void *p)
+         a[1] = cmd->args[0].v.i;
+         if (sub_control(sub, SD_CTRL_SUB_STEP, a) > 0) {
+             if (step) {
+-                mpctx->opts->subs_rend->sub_delay -= a[0] - refpts;
++                mpctx->opts->subs_rend->sub_delay[track_ind] -= a[0] - refpts;
+                 m_config_notify_change_opt_ptr_notify(mpctx->mconfig,
+-                                               &mpctx->opts->subs_rend->sub_delay);
+-                show_property_osd(mpctx, "sub-delay", cmd->on_osd);
++                                               &mpctx->opts->subs_rend->sub_delay[track_ind]);
++                show_property_osd(mpctx,
++                    track_ind == 0 ? "sub-delay" : "secondary-sub-delay",
++                    cmd->on_osd);
+             } else {
+                 // We can easily get stuck by failing to seek to the video
+                 // frame which actually shows the sub first (because video
+diff --git a/player/misc.c b/player/misc.c
+index b91d52a..d267c51 100644
+--- a/player/misc.c
++++ b/player/misc.c
+@@ -147,7 +147,12 @@ double get_track_seek_offset(struct MPContext *mpctx, struct track *track)
+         if (track->type == STREAM_AUDIO)
+             return -opts->audio_delay;
+         if (track->type == STREAM_SUB)
+-            return -opts->subs_rend->sub_delay;
++        {
++            for (int n = 0; n < num_ptracks[STREAM_SUB]; n++) {
++                if (mpctx->current_track[n][STREAM_SUB] == track)
++                    return -opts->subs_rend->sub_delay[n];
++            }
++        }
+     }
+     return 0;
+ }
+diff --git a/sub/dec_sub.c b/sub/dec_sub.c
+index 30f5b65..52af2e8 100644
+--- a/sub/dec_sub.c
++++ b/sub/dec_sub.c
+@@ -94,9 +94,10 @@ static void update_subtitle_speed(struct dec_sub *sub)
+ static double pts_to_subtitle(struct dec_sub *sub, double pts)
+ {
+     struct mp_subtitle_opts *opts = sub->opts;
++    float delay = sub->order < 0 ? 0.0f : opts->sub_delay[sub->order];
+ 
+     if (pts != MP_NOPTS_VALUE)
+-        pts = (pts * sub->play_dir - opts->sub_delay) / sub->sub_speed;
++        pts = (pts * sub->play_dir - delay) / sub->sub_speed;
+ 
+     return pts;
+ }
+@@ -104,9 +105,10 @@ static double pts_to_subtitle(struct dec_sub *sub, double pts)
+ static double pts_from_subtitle(struct dec_sub *sub, double pts)
+ {
+     struct mp_subtitle_opts *opts = sub->opts;
++    float delay = sub->order < 0 ? 0.0f : opts->sub_delay[sub->order];
+ 
+     if (pts != MP_NOPTS_VALUE)
+-        pts = (pts * sub->sub_speed + opts->sub_delay) * sub->play_dir;
++        pts = (pts * sub->sub_speed + delay) * sub->play_dir;
+ 
+     return pts;
+ }
+@@ -295,7 +297,8 @@ bool sub_read_packets(struct dec_sub *sub, double video_pts)
+             break;
+ 
+         // (Use this mechanism only if sub_delay matters to avoid corner cases.)
+-        double min_pts = sub->opts->sub_delay < 0 ? video_pts : MP_NOPTS_VALUE;
++        float delay = sub->order < 0 ? 0.0f : sub->opts->sub_delay[sub->order];
++        double min_pts = delay < 0 ? video_pts : MP_NOPTS_VALUE;
+ 
+         struct demux_packet *pkt;
+         int st = demux_read_packet_async_until(sub->sh, min_pts, &pkt);
