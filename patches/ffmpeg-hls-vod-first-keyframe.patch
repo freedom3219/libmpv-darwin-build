@@ -1,0 +1,57 @@
+--- a/libavformat/hls.c
++++ b/libavformat/hls.c
+@@ -157,6 +157,7 @@
+     HLSAudioSetupInfo audio_setup_info;
+ 
+     int64_t seek_timestamp;
++    int seek_first_video_keyframe;
+     int seek_flags;
+     int seek_stream_index; /* into subdemuxer stream array */
+ 
+@@ -2230,6 +2231,7 @@
+             if (c->cur_timestamp != AV_NOPTS_VALUE) {
+                 /* catch up */
+                 pls->seek_timestamp = c->cur_timestamp;
++                pls->seek_first_video_keyframe = 0;
+                 pls->seek_flags = AVSEEK_FLAG_ANY;
+                 pls->seek_stream_index = -1;
+             }
+@@ -2343,6 +2345,14 @@
+                         break;
+                     }
+ 
++                    /* A VOD opening keyframe can have a decode timestamp just
++                     * before the rounded segment start. Its presentation time
++                     * is retained; the player still trims to the seek target. */
++                    if (pls->seek_first_video_keyframe && (pls->pkt->flags & AV_PKT_FLAG_KEY) &&
++                        seg == pls->segments[0]) {
++                        pls->seek_timestamp = AV_NOPTS_VALUE;
++                        break;
++                    }
+                     tb = get_timebase(pls);
+                     ts_diff = av_rescale_rnd(pls->pkt->dts, AV_TIME_BASE,
+                                             tb.den, AV_ROUND_DOWN) -
+@@ -2443,6 +2453,7 @@
+     int stream_subdemuxer_index;
+     int64_t first_timestamp, seek_timestamp, duration;
+     int64_t seq_no, seg_start_ts;
++    int seek_first_video_keyframe = 0;
+ 
+     if ((flags & AVSEEK_FLAG_BYTE) || (c->ctx->ctx_flags & AVFMTCTX_UNSEEKABLE))
+         return AVERROR(ENOSYS);
+@@ -2481,6 +2492,7 @@
+         /* Seeking to start of segment ensures we seek to a keyframe located
+          * before the given timestamp. */
+         seek_timestamp = seg_start_ts;
++        seek_first_video_keyframe = seek_pls->finished && seq_no == seek_pls->start_seq_no;
+     }
+ 
+     /* set segment now so we do not need to search again below */
+@@ -2507,6 +2519,7 @@
+         /* Reset the init segment so it's re-fetched and served appropiately */
+         pls->cur_init_section = NULL;
+ 
++        pls->seek_first_video_keyframe = pls == seek_pls && seek_first_video_keyframe;
+         pls->seek_timestamp = seek_timestamp;
+         pls->seek_flags = flags;
+ 

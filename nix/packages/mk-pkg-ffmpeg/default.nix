@@ -11,6 +11,7 @@ let
   packageLock = (import ../../../packages.lock.nix).${name};
   inherit (packageLock) version;
 
+  oses = import ../../utils/constants/oses.nix;
   flavors = import ../../utils/constants/flavors.nix;
   variants = import ../../utils/constants/variants.nix;
   callPackage = pkgs.lib.callPackageWith {
@@ -44,6 +45,9 @@ let
     cd $src
     patch -p1 <${../../../patches/ffmpeg-fix-vp9-hwaccel.patch}
     patch -p1 <${../../../patches/ffmpeg-fix-hls-mp4-seek.patch}
+    ${pkgs.lib.optionalString (os == oses.macos && variant == variants.video) ''
+      patch -p1 <${../../../patches/ffmpeg-hls-vod-first-keyframe.patch}
+    ''}
     patch -p1 <${../../../patches/ffmpeg-fix-mov-fragment-index-reset.patch}
     patch -p1 <${../../../patches/ffmpeg-fix-ios-hdr-texture.patch}
     patch -p1 <${../../../patches/ffmpeg-fix-dash-base-url-escape.patch}
